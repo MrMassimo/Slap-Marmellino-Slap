@@ -158,15 +158,6 @@ document.addEventListener("DOMContentLoaded", () => {
         targetScreen.classList.remove("hidden");
     }
 
-    function fadeOutAndSwitch(currentScreen, nextScreen) {
-        currentScreen.style.opacity = "0";
-        setTimeout(() => {
-            currentScreen.classList.add("hidden");
-            currentScreen.style.opacity = "1";
-            nextScreen.classList.remove("hidden");
-        }, 300);
-    }
-
     // ========================================================
     // GAMEPLAY
     // ========================================================
@@ -225,7 +216,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function updateFaceImage(currentLevel) {
-        if (currentLevel === 3 || currentLevel === 4 || currentLevel === 5) {
+        if (currentLevel >= 3) {
             gameFace.src = `faccia-${currentLevel}.jpg`;
         } else {
             gameFace.src = `faccia-${currentLevel}.png`;
@@ -278,7 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
         finalLevelBonus.textContent = level;
         finalTotalScore.textContent = finalScore;
 
-        if (level === 3 || level === 4 || level === 5) {
+        if (level >= 3) {
             finalFaceImg.src = `faccia-${level}.jpg`;
         } else {
             finalFaceImg.src = `faccia-${level}.png`;
