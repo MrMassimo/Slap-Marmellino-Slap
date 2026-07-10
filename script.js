@@ -1,73 +1,68 @@
-// Stato del Gioco
-const gameState = {
-    step: 0, // Per l'introduzione narrativa
-    level: 0,
-    score: 0,
-    progress: 0,
-    timeLeft: 10,
-    gameActive: false,
-    timerInterval: null
-};
+document.addEventListener("DOMContentLoaded", () => {
 
-// Selettori DOM
-const introScreen = document.getElementById('intro-screen');
-const playScreen = document.getElementById('play-screen');
-const gameoverScreen = document.getElementById('gameover-screen');
+    // --- RIFERIMENTI DOM SCHERMATE ---
+    const scrIntro = document.getElementById("screen-intro");
+    const scrMenu = document.getElementById("screen-menu");
+    const scrGame = document.getElementById("screen-game");
+    const scrFinal = document.getElementById("screen-final");
 
-const introImg = document.getElementById('intro-img');
-const speechBubble = document.getElementById('speech-bubble');
-const storyText = document.getElementById('intro-story-text');
-const nextBtn = document.getElementById('next-btn');
-const startBtn = document.getElementById('start-btn');
+    // --- RIFERIMENTI ELEMENTI INTRO ---
+    const introBubble = document.getElementById("intro-bubble");
+    const introHusband = document.getElementById("intro-husband");
+    const introWife = document.getElementById("intro-wife");
+    const sweatDrops = document.getElementById("sweat-drops");
 
-const gameFace = document.getElementById('game-face');
-const slapFlash = document.getElementById('slap-flash');
-const charWrapper = document.getElementById('character-wrapper');
-const levelDisplay = document.getElementById('level-display');
-const scoreDisplay = document.getElementById('score-display');
-const timerBar = document.getElementById('timer-bar');
-const progressBar = document.getElementById('progress-bar');
+    // --- RIFERIMENTI ELEMENTI GIOCO ---
+    const gameTimer = document.getElementById("game-timer");
+    const statSlaps = document.getElementById("stat-slaps");
+    const statLevel = document.getElementById("stat-level");
+    const statAp = document.getElementById("stat-ap");
+    const gameFace = document.getElementById("game-face");
+    const btnSlap = document.getElementById("btn-slap");
+    const slapEffectsContainer = document.getElementById("slap-effects-container");
 
-const endFace = document.getElementById('end-face');
-const maxLevelDisplay = document.getElementById('max-level-reached');
-const finalScoreDisplay = document.getElementById('final-score');
-const restartBtn = document.getElementById('restart-btn');
+    // --- RIFERIMENTI ELEMENTI MENU & RISULTATI ---
+    const btnPlay = document.getElementById("btn-play");
+    const valBestScore = document.getElementById("val-best-score");
+    const finalFaceImg = document.getElementById("final-face-img");
+    const finalSlaps = document.getElementById("final-slaps");
+    const finalAp = document.getElementById("final-ap");
+    const finalLevelBonus = document.getElementById("final-level-bonus");
+    const finalTotalScore = document.getElementById("final-total-score");
+    const btnReplay = document.getElementById("btn-replay");
 
-// Mappa delle immagini del gioco
-const IMAGES = {
-    intro1: 'assets/intro-1.png',
-    wife: 'assets/intro-wife.png',
-    terrified: 'assets/intro-terrified.png',
-    faces: [
-        'assets/faccia-0.png',
-        'assets/faccia-1.png',
-        'assets/faccia-2.png',
-        'assets/faccia-3.jpg',
-        'assets/faccia-4.jpg',
-        'assets/faccia-5.jpg'
-    ]
-};
+    // --- STATO DEL GIOCO ---
+    let slaps = 0;
+    let level = 0;
+    let actionPoints = 0;
+    let timeLeft = 10;
+    let gameInterval = null;
+    let bestScore = localStorage.getItem("slap_marmellino_best") || 0;
 
-// Generatore Audio (Beep & Slap) senza bisogno di file mp3 esterni
-const playSound = (type) => {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
+    const curseWords = [
+        "@#! cane", 
+        "@#! lupo", 
+        "@#! ufo", 
+        "@#! impestata", 
+        "@#! balorda", 
+        "porco @#!", 
+        "@#! maiale"
+    ];
 
-        if (type === 'whistle') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.3);
-            gain.gain.setValueAtTime(0.1, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.4);
-        } else if (type === 'slap') {
-            // Effetto rumore bianco simulato per lo schiaffo
-            const bufferSize = ctx.sampleRate * 0.1;
+    valBestScore.textContent = bestScore;
+
+    playIntroSequence();
+
+    // ========================================================
+    // SYNTH SOUND EFFECT (Web Audio API)
+    // ========================================================
+    function playSlapSound() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            
+            const bufferSize = ctx.sampleRate * 0.15;
             const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
             const data = buffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) {
@@ -75,186 +70,241 @@ const playSound = (type) => {
             }
             const noise = ctx.createBufferSource();
             noise.buffer = buffer;
+
             const filter = ctx.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.value = 1000;
+            filter.frequency.setValueAtTime(1000, ctx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.12);
+
+            const gainNode = ctx.createGain();
+            gainNode.gain.setValueAtTime(0.8, ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+
             noise.connect(filter);
-            filter.connect(gain);
-            gain.gain.setValueAtTime(0.3, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+            filter.connect(gainNode);
+            gainNode.connect(ctx.destination);
+
+            const osc = ctx.createOscillator();
+            const oscGain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(150, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.08);
+
+            oscGain.gain.setValueAtTime(0.5, ctx.currentTime);
+            oscGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+
+            osc.connect(oscGain);
+            oscGain.connect(ctx.destination);
+
             noise.start();
-        } else if (type === 'gameover') {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(220, ctx.currentTime);
-            osc.frequency.linearRampToValueAtTime(80, ctx.currentTime + 0.8);
-            gain.gain.setValueAtTime(0.2, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
             osc.start();
-            osc.stop(ctx.currentTime + 0.8);
+            
+            noise.stop(ctx.currentTime + 0.15);
+            osc.stop(ctx.currentTime + 0.15);
+        } catch (e) {
+            console.warn("Audio Context non supportato.", e);
         }
-    } catch(e) {
-        console.log("Audio non supportato o interazione utente richiesta.");
     }
-};
 
-// Storia / Intro passi
-const storySteps = [
-    {
-        text: "Marmellino adora fischiettare allegro in salotto...",
-        image: IMAGES.intro1,
-        bubble: "Fiuuu~ 😙♪",
-        sound: 'whistle'
-    },
-    {
-        text: "La fischio-mania continua tutto il giorno senza sosta!",
-        image: IMAGES.intro1,
-        bubble: "Trallallero~ 🎵",
-        sound: 'whistle'
-    },
-    {
-        text: "La moglie irrompe furiosa con il mattarello! Non ne può più!",
-        image: IMAGES.wife,
-        bubble: "BASTAAA!!! 😡💥",
-        sound: null
-    },
-    {
-        text: "Marmellino si accorge del pericolo imminente...",
-        image: IMAGES.terrified,
-        bubble: "Aiuto... 😨💦",
-        sound: null
+    // ========================================================
+    // SEQUENZA INTRO
+    // ========================================================
+    function playIntroSequence() {
+        switchScreen(scrIntro);
+        introHusband.src = "intro-1.png";
+        introHusband.classList.remove("scared-animation");
+        introWife.classList.add("hidden-wife");
+        introBubble.classList.add("hidden");
+        sweatDrops.classList.add("hidden");
+
+        let curseInterval = null;
+
+        setTimeout(() => {
+            introBubble.classList.remove("hidden");
+            let index = 0;
+            introBubble.textContent = curseWords[index];
+            
+            curseInterval = setInterval(() => {
+                index = (index + 1) % curseWords.length;
+                introBubble.textContent = curseWords[index];
+            }, 350);
+        }, 1000);
+
+        setTimeout(() => {
+            clearInterval(curseInterval);
+            introBubble.classList.add("hidden");
+            introWife.classList.remove("hidden-wife");
+        }, 3500);
+
+        setTimeout(() => {
+            introHusband.src = "intro-terrified.png";
+            introHusband.classList.add("scared-animation");
+            sweatDrops.classList.remove("hidden");
+        }, 4500);
+
+        setTimeout(() => {
+            fadeOutAndSwitch(scrIntro, scrMenu);
+        }, 5500);
     }
-];
 
-// Gestione click sul tasto "Avanti"
-nextBtn.addEventListener('click', () => {
-    gameState.step++;
-    if (gameState.step < storySteps.length) {
-        const stepData = storySteps[gameState.step];
-        storyText.innerText = stepData.text;
-        introImg.src = stepData.image;
-        if (stepData.bubble) {
-            speechBubble.innerText = stepData.bubble;
-            speechBubble.classList.remove('hidden');
+    // ========================================================
+    // TRANSITIONS
+    // ========================================================
+    function switchScreen(targetScreen) {
+        scrIntro.classList.add("hidden");
+        scrMenu.classList.add("hidden");
+        scrGame.classList.add("hidden");
+        scrFinal.classList.add("hidden");
+        targetScreen.classList.remove("hidden");
+    }
+
+    function fadeOutAndSwitch(currentScreen, nextScreen) {
+        currentScreen.style.opacity = "0";
+        setTimeout(() => {
+            currentScreen.classList.add("hidden");
+            currentScreen.style.opacity = "1";
+            nextScreen.classList.remove("hidden");
+        }, 300);
+    }
+
+    // ========================================================
+    // GAMEPLAY
+    // ========================================================
+    function startGame() {
+        slaps = 0;
+        level = 0;
+        actionPoints = 0;
+        timeLeft = 10;
+
+        statSlaps.textContent = slaps;
+        statLevel.textContent = level;
+        statAp.textContent = actionPoints;
+        gameTimer.textContent = timeLeft;
+        gameTimer.parentElement.classList.remove("timer-pulse");
+        gameFace.src = "faccia-0.png";
+        btnSlap.disabled = false;
+
+        switchScreen(scrGame);
+
+        gameInterval = setInterval(() => {
+            timeLeft--;
+            gameTimer.textContent = timeLeft;
+
+            if (timeLeft <= 3) {
+                gameTimer.parentElement.classList.add("timer-pulse");
+            }
+
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }, 1000);
+    }
+
+    function handleSlap() {
+        if (timeLeft <= 0) return;
+
+        slaps++;
+        playSlapSound();
+
+        actionPoints = Math.floor(slaps / 10);
+
+        let newLevel = Math.floor(slaps / 10);
+        if (newLevel > 5) newLevel = 5;
+
+        if (newLevel !== level) {
+            level = newLevel;
+            updateFaceImage(level);
+        }
+
+        statSlaps.textContent = slaps;
+        statLevel.textContent = level;
+        statAp.textContent = actionPoints;
+
+        triggerFaceShake();
+        spawnSlapVisualEffect();
+    }
+
+    function updateFaceImage(currentLevel) {
+        if (currentLevel === 3 || currentLevel === 4 || currentLevel === 5) {
+            gameFace.src = `faccia-${currentLevel}.jpg`;
         } else {
-            speechBubble.classList.add('hidden');
+            gameFace.src = `faccia-${currentLevel}.png`;
         }
-        if (stepData.sound) playSound(stepData.sound);
-    } else {
-        nextBtn.classList.add('hidden');
-        startBtn.classList.remove('hidden');
-        storyText.innerText = "Dagli una lezione prima che scada il tempo!";
     }
-});
 
-// Avvio Gioco
-startBtn.addEventListener('click', () => {
-    introScreen.classList.remove('active');
-    playScreen.classList.add('active');
-    startGame();
-});
-
-const startGame = () => {
-    gameState.level = 0;
-    gameState.score = 0;
-    gameState.progress = 0;
-    gameState.gameActive = true;
-    
-    startLevel();
-};
-
-const startLevel = () => {
-    gameState.progress = 0;
-    gameState.timeLeft = Math.max(10 - gameState.level * 0.8, 4); // Tempo cala a ogni livello
-    progressBar.style.width = '0%';
-    
-    levelDisplay.innerText = gameState.level;
-    scoreDisplay.innerText = gameState.score;
-    
-    // Aggiorna l'immagine in base al livello raggiunto
-    const faceIndex = Math.min(gameState.level, IMAGES.faces.length - 1);
-    gameFace.src = IMAGES.faces[faceIndex];
-
-    clearInterval(gameState.timerInterval);
-    gameState.timerInterval = setInterval(updateTimer, 100);
-};
-
-const updateTimer = () => {
-    gameState.timeLeft -= 0.1;
-    const percent = (gameState.timeLeft / Math.max(10 - gameState.level * 0.8, 4)) * 100;
-    timerBar.style.width = `${Math.max(percent, 0)}%`;
-
-    if (gameState.timeLeft <= 0) {
-        endGame();
+    function triggerFaceShake() {
+        gameFace.classList.remove("shake-animation");
+        void gameFace.offsetWidth; 
+        gameFace.classList.add("shake-animation");
     }
-};
 
-// Funzione Schiaffo
-charWrapper.addEventListener('click', () => {
-    if (!gameState.gameActive) return;
+    function spawnSlapVisualEffect() {
+        const words = ["👋 SMACK!", "⚡ POW!", "💥 BAM!", "🥋 SDENG!", "👉 SLAP!"];
+        const randomWord = words[Math.floor(Math.random() * words.length)];
+        
+        const popup = document.createElement("div");
+        popup.className = "slap-popup pop-effect";
+        popup.textContent = randomWord;
 
-    // Effetto grafico schiaffo
-    charWrapper.classList.add('slapped');
-    slapFlash.style.display = 'block';
-    playSound('slap');
+        const xPos = Math.random() * 60 + 20;
+        const yPos = Math.random() * 60 + 20;
+        popup.style.left = `${xPos}%`;
+        popup.style.top = `${yPos}%`;
 
-    setTimeout(() => {
-        charWrapper.classList.remove('slapped');
-    }, 80);
+        slapEffectsContainer.appendChild(popup);
 
-    setTimeout(() => {
-        slapFlash.style.display = 'none';
-    }, 150);
-
-    // Progresso
-    const increment = 100 / (10 + gameState.level * 3); // Più difficile a ogni livello
-    gameState.progress += increment;
-    gameState.score += 10;
-    
-    scoreDisplay.innerText = gameState.score;
-    progressBar.style.width = `${Math.min(gameState.progress, 100)}%`;
-
-    if (gameState.progress >= 100) {
-        levelUp();
+        setTimeout(() => {
+            popup.remove();
+        }, 400);
     }
-});
 
-const levelUp = () => {
-    clearInterval(gameState.timerInterval);
-    gameState.level++;
-    
-    if (gameState.level >= IMAGES.faces.length) {
-        // Vittoria Finale se supera l'ultimo livello
-        endGame();
-    } else {
-        startLevel();
+    // ========================================================
+    // END GAME
+    // ========================================================
+    function endGame() {
+        clearInterval(gameInterval);
+        btnSlap.disabled = true;
+
+        const finalScore = actionPoints + level;
+
+        if (finalScore > bestScore) {
+            bestScore = finalScore;
+            localStorage.setItem("slap_marmellino_best", bestScore);
+            valBestScore.textContent = bestScore;
+        }
+
+        finalSlaps.textContent = slaps;
+        finalAp.textContent = actionPoints;
+        finalLevelBonus.textContent = level;
+        finalTotalScore.textContent = finalScore;
+
+        if (level === 3 || level === 4 || level === 5) {
+            finalFaceImg.src = `faccia-${level}.jpg`;
+        } else {
+            finalFaceImg.src = `faccia-${level}.png`;
+        }
+
+        setTimeout(() => {
+            switchScreen(scrFinal);
+        }, 800);
     }
-};
 
-const endGame = () => {
-    gameState.gameActive = false;
-    clearInterval(gameState.timerInterval);
-    playSound('gameover');
+    const handleSlapEvent = (e) => {
+        e.preventDefault();
+        handleSlap();
+    };
 
-    playScreen.classList.remove('active');
-    gameoverScreen.classList.add('active');
+    btnSlap.addEventListener("touchstart", handleSlapEvent, { passive: false });
+    btnSlap.addEventListener("mousedown", (e) => {
+        if (e.button === 0) {
+            handleSlap();
+        }
+    });
 
-    const maxFaceIndex = Math.min(gameState.level, IMAGES.faces.length - 1);
-    endFace.src = IMAGES.faces[maxFaceIndex];
-    maxLevelDisplay.innerText = gameState.level;
-    finalScoreDisplay.innerText = gameState.score;
-};
-
-// Gioca Ancora
-restartBtn.addEventListener('click', () => {
-    gameoverScreen.classList.remove('active');
-    introScreen.classList.add('active');
+    btnPlay.addEventListener("click", startGame);
     
-    // Reset Intro
-    gameState.step = 0;
-    introImg.src = IMAGES.intro1;
-    speechBubble.innerText = "Fiuuu~ 😙♪";
-    speechBubble.classList.remove('hidden');
-    storyText.innerText = "Marmellino adora fischiettare allegro in salotto...";
-    nextBtn.classList.remove('hidden');
-    startBtn.classList.add('hidden');
+    btnReplay.addEventListener("click", () => {
+        switchScreen(scrMenu);
+    });
+
 });

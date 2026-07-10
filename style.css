@@ -1,290 +1,473 @@
-@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Outfit:wght@400;700;900&display=swap');
-
+/* ==========================================
+   RESET & IMPOSTAZIONI GLOBALI
+   ========================================== */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
-    background-color: #1e1b4b;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Fredoka', sans-serif;
+    background-color: #1e1233;
+    background: radial-gradient(circle, #351a5c 0%, #150a24 100%);
     color: #ffffff;
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
     overflow: hidden;
 }
 
 #game-container {
-    width: 100%;
+    width: 95vw;
     max-width: 480px;
-    height: 95vh;
+    height: 92vh;
     max-height: 800px;
-    background: #312e81;
-    border: 6px solid #000000;
-    border-radius: 24px;
-    box-shadow: 12px 12px 0px #000000;
+    background-color: #2a1b40;
+    border: 5px solid #ffcb05;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
     position: relative;
     overflow: hidden;
-    padding: 20px;
-}
-
-/* Gestione Schermate */
-.screen {
-    display: none;
+    display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    height: 100%;
-    text-align: center;
-    padding: 10px 0;
 }
 
-.screen.active {
-    display: flex;
-}
-
-/* Testi Retro */
-.game-title {
-    font-family: 'Fredoka One', cursive;
-    font-size: 3.5rem;
-    color: #ef4444;
-    text-shadow: 4px 4px 0px #000000;
-    -webkit-text-stroke: 2px #000000;
-    letter-spacing: 2px;
-}
-
-.game-over-title {
-    font-family: 'Fredoka One', cursive;
-    font-size: 3rem;
-    color: #f59e0b;
-    text-shadow: 4px 4px 0px #000000;
-    -webkit-text-stroke: 2px #000000;
-}
-
-.subtitle {
-    font-size: 1.2rem;
-    color: #fef08a;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-/* Avatar e immagini */
-.avatar-container {
-    position: relative;
-    width: 240px;
-    height: 240px;
-    background: #ffffff;
-    border: 5px solid #000000;
-    border-radius: 50%;
-    overflow: visible;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 6px 6px 0px #000000;
-}
-
-.avatar-container img, .character-area img {
+.screen {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 1.5rem;
+    transition: opacity 0.3s ease;
 }
 
-/* Nuvola dei dialoghi */
+.hidden {
+    display: none !important;
+}
+
+/* ==========================================
+   PULSANTI & COMPONENTI COMUNI
+   ========================================== */
+.btn {
+    font-family: 'Bangers', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 1.5px;
+    padding: 0.8rem 2rem;
+    border-radius: 50px;
+    border: 3px solid #000;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    box-shadow: 0 6px 0 #000;
+}
+
+.btn:active {
+    transform: translateY(4px) scale(0.95);
+    box-shadow: 0 2px 0 #000;
+}
+
+.btn-primary {
+    background-color: #ffcb05;
+    color: #000;
+}
+
+.btn-secondary {
+    background-color: #00ccff;
+    color: #000;
+}
+
+/* ==========================================
+   A) SCREEN INTRO & ANIMAZIONI
+   ========================================== */
+#screen-intro {
+    justify-content: center;
+    background-color: #ffffff;
+    background-image: radial-gradient(#e0e0e0 20%, transparent 20%);
+    background-size: 15px 15px;
+}
+
+.intro-scene {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.intro-characters {
+    position: relative;
+    width: 100%;
+    height: 60%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+#intro-husband-container {
+    position: relative;
+    width: 150px;
+    height: auto;
+    z-index: 2;
+}
+
+#intro-husband {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+#intro-wife {
+    position: absolute;
+    left: -10px;
+    bottom: 0;
+    width: 160px;
+    height: auto;
+    z-index: 3;
+    transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: wifeSwing 0.6s infinite alternate ease-in-out;
+}
+
+.hidden-wife {
+    transform: translateX(-250px) rotate(-15deg);
+}
+
 .speech-bubble {
     position: absolute;
-    top: -40px;
-    right: -50px;
-    background: #facc15;
-    color: #000000;
-    font-weight: 900;
-    padding: 10px 18px;
+    top: 15%;
+    background: #fff;
+    border: 4px solid #000;
     border-radius: 20px;
-    border: 3px solid #000000;
-    box-shadow: 4px 4px 0px #000000;
-    font-size: 1.1rem;
-    white-space: nowrap;
-    animation: bounce 0.6s infinite alternate;
+    padding: 10px 20px;
+    color: #000;
+    font-weight: bold;
+    font-size: 1.3rem;
+    z-index: 10;
+    text-align: center;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.15);
 }
 
 .speech-bubble::after {
     content: '';
     position: absolute;
-    bottom: -12px;
-    left: 20px;
-    border-width: 12px 12px 0;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 15px 15px 0;
     border-style: solid;
-    border-color: #facc15 transparent;
+    border-color: #fff transparent;
     display: block;
     width: 0;
 }
 
-/* Area di Gioco e Faccia */
-.character-area {
-    width: 250px;
-    height: 250px;
-    position: relative;
-    cursor: pointer;
+.speech-bubble::before {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 16px 16px 0;
+    border-style: solid;
+    border-color: #000 transparent;
+    display: block;
+    width: 0;
+    z-index: -1;
 }
 
-#character-wrapper {
+#sweat-drops {
+    position: absolute;
+    top: 10%;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+}
+
+.drop {
+    font-size: 1.5rem;
+    animation: sweatFall 1s infinite linear;
+}
+
+.d2 {
+    animation-delay: 0.4s;
+}
+
+/* ==========================================
+   B) SCREEN MENU
+   ========================================== */
+.game-title {
+    font-family: 'Bangers', sans-serif;
+    font-size: 3rem;
+    color: #ffcb05;
+    text-shadow: 4px 4px 0px #000;
+    text-align: center;
+    margin-top: 10%;
+}
+
+.game-subtitle {
+    font-size: 1rem;
+    text-align: center;
+    color: #dfd4f0;
+    padding: 0 1rem;
+}
+
+.menu-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 20%;
+}
+
+.highscore-container {
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 0.6rem 1.5rem;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 2px solid #573b8a;
+}
+
+.highscore-text {
+    font-size: 1rem;
+}
+
+/* ==========================================
+   C) SCREEN GAME
+   ========================================= */
+.game-header {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.timer-box {
+    background-color: #0f071a;
+    border: 3px solid #ffcb05;
+    border-radius: 15px;
+    padding: 0.5rem 2rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+.timer-pulse {
+    border-color: #ff2a2a;
+    color: #ff2a2a;
+    animation: pulseRed 0.5s infinite alternate;
+}
+
+.stats-panel {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 5px;
+}
+
+.stat-box {
+    flex: 1;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 2px solid #573b8a;
+    border-radius: 10px;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.stat-box .label {
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+    color: #b29cd9;
+    margin-bottom: 3px;
+}
+
+.stat-box .value {
+    font-family: 'Bangers', sans-serif;
+    font-size: 1.6rem;
+    color: #ffcb05;
+}
+
+.face-stage {
+    width: 100%;
+    height: 45%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#face-wrapper {
+    position: relative;
+    max-width: 250px;
+    width: 60%;
+}
+
+#game-face {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-height: 250px;
+    object-fit: contain;
+}
+
+.action-area {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-slap {
+    width: 90%;
+    background-color: #ff2a2a;
+    color: #ffffff;
+    font-size: 2.2rem;
+    border-color: #000;
+    box-shadow: 0 8px 0 #000;
+}
+
+.btn-slap:active {
+    transform: translateY(6px) scale(0.92);
+    box-shadow: 0 2px 0 #000;
+}
+
+/* ==========================================
+   D) SCREEN FINAL
+   ========================================== */
+.final-title {
+    font-family: 'Bangers', sans-serif;
+    font-size: 2.8rem;
+    color: #ff2a2a;
+    text-shadow: 3px 3px 0px #000;
+}
+
+.final-face-container {
+    width: 140px;
+    height: 140px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 3px solid #ffcb05;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.final-face-container img {
+    width: 80%;
+    height: auto;
+}
+
+.score-board {
+    width: 100%;
+    background-color: #170e24;
+    border: 3px solid #573b8a;
+    border-radius: 15px;
+    padding: 1rem;
+}
+
+.board-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    color: #dfd4f0;
+}
+
+.board-row strong {
+    color: #fff;
+}
+
+.board-divider {
+    border: 0;
+    height: 2px;
+    background-color: #573b8a;
+    margin: 0.5rem 0;
+}
+
+.total-row {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #ffcb05;
+    margin-bottom: 0;
+}
+
+.total-row strong {
+    color: #ffcb05;
+    font-size: 1.4rem;
+}
+
+/* ==========================================
+   ANIMAZIONI (KEYFRAMES)
+   ========================================== */
+.shake-animation {
+    animation: shake 0.15s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-4px, 0, 0) rotate(-3deg); }
+    20%, 80% { transform: translate3d(6px, 0, 0) rotate(4deg); }
+    30%, 50%, 70% { transform: translate3d(-8px, 0, 0) rotate(-5deg); }
+    40%, 60% { transform: translate3d(8px, 0, 0) rotate(5deg); }
+}
+
+.scared-animation {
+    animation: shiver 0.08s infinite alternate;
+}
+
+@keyframes shiver {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    100% { transform: translate(-1px, -1px) rotate(0.5deg); }
+}
+
+@keyframes wifeSwing {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(4deg) translateY(-3px); }
+}
+
+@keyframes sweatFall {
+    0% { transform: translateY(-10px); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateY(20px); opacity: 0; }
+}
+
+@keyframes pulseRed {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.08); background-color: #2b0c0c; }
+}
+
+.pop-effect {
+    animation: popOut 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popOut {
+    0% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.3) rotate(15deg); opacity: 0; }
+}
+
+#slap-effects-container {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    background: #ffffff;
-    border: 6px solid #000000;
-    border-radius: 50%;
-    overflow: hidden;
-    box-shadow: 8px 8px 0px #000000;
-    transition: transform 0.05s ease;
-}
-
-#character-wrapper.slapped {
-    transform: scale(0.9) rotate(-5deg);
-    background: #fee2e2;
-}
-
-#slap-flash {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotate(-10deg);
-    background: #ef4444;
-    color: #ffffff;
-    font-family: 'Fredoka One', cursive;
-    font-size: 2.2rem;
-    padding: 8px 16px;
-    border: 4px solid #000;
-    border-radius: 12px;
-    box-shadow: 4px 4px 0px #000;
-    display: none;
-    z-index: 10;
     pointer-events: none;
 }
 
-/* Bottoni Retro */
-.btn {
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.5rem;
-    padding: 15px 30px;
-    border: 4px solid #000000;
-    border-radius: 16px;
-    cursor: pointer;
-    transition: all 0.1s ease;
-    width: 100%;
-    text-transform: uppercase;
-}
-
-.btn-primary {
-    background: #10b981;
-    color: #ffffff;
-    box-shadow: 5px 5px 0px #000000;
-}
-
-.btn-danger {
-    background: #ef4444;
-    color: #ffffff;
-    box-shadow: 5px 5px 0px #000000;
-}
-
-.btn:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 7px 7px 0px #000000;
-}
-
-.btn:active {
-    transform: translate(2px, 2px);
-    box-shadow: 1px 1px 0px #000000;
-}
-
-/* Barre e Statistiche */
-.game-header {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    gap: 15px;
-}
-
-.stat-badge {
-    background: #000000;
-    color: #facc15;
-    font-weight: 900;
-    padding: 10px 20px;
-    border-radius: 12px;
-    border: 3px solid #facc15;
-    flex: 1;
-    font-size: 1.1rem;
-}
-
-.timer-container, .progress-container {
-    width: 100%;
-    height: 24px;
-    background: #1e1b4b;
-    border: 3px solid #000000;
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-#timer-bar {
-    width: 100%;
-    height: 100%;
-    background: #ef4444;
-    transition: width 0.1s linear;
-}
-
-#progress-bar {
-    width: 0%;
-    height: 100%;
-    background: #10b981;
-    transition: width 0.08s ease-out;
-}
-
-.progress-label {
-    font-size: 0.9rem;
-    color: #cbd5e1;
-    font-weight: 700;
-    margin-top: 5px;
-}
-
-.story-text {
-    background: rgba(0, 0, 0, 0.4);
-    padding: 15px;
-    border-radius: 12px;
-    font-size: 1.1rem;
-    line-height: 1.4;
-    font-weight: 700;
-    height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px dashed rgba(255, 255, 255, 0.2);
-}
-
-.stats-card {
-    background: rgba(0, 0, 0, 0.5);
-    border: 4px solid #000000;
-    border-radius: 16px;
-    padding: 20px;
-    width: 100%;
-    font-size: 1.3rem;
-    font-weight: 800;
-}
-
-.text-yellow { color: #facc15; }
-.text-green { color: #10b981; }
-
-/* Animazioni */
-@keyframes bounce {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-8px); }
-}
-
-.animate-float {
-    animation: bounce 2s infinite alternate ease-in-out;
-}
-
-.hidden {
-    display: none !important;
+.slap-popup {
+    position: absolute;
+    font-family: 'Bangers', sans-serif;
+    font-size: 1.8rem;
+    color: #ffcb05;
+    text-shadow: 2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000;
+    pointer-events: none;
+    white-space: nowrap;
 }

@@ -2,74 +2,129 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marmellino Slap Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Slap Marmellino Slap 🥊</title>
+    <!-- Font stile fumetto da Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <div id="game-container">
-        
-        <!-- SCHERMATA DI INTRO / STORIA -->
-        <div id="intro-screen" class="screen active">
-            <h1 class="game-title">MARMELLINO</h1>
-            <p class="subtitle">Il fischietto molesto</p>
-            
-            <div class="avatar-container animate-float">
-                <img id="intro-img" src="assets/intro-1.png" alt="Marmellino">
-                <div id="speech-bubble" class="speech-bubble hidden">Fiuuu~ 😙♪</div>
-            </div>
 
-            <div id="intro-story-text" class="story-text">
-                Marmellino adora fischiettare allegro in salotto...
+        <!-- ================= A) SCREEN INTRO ================= -->
+        <div id="screen-intro" class="screen">
+            <div class="intro-scene">
+                <!-- Bolla di testo per le imprecazioni -->
+                <div id="intro-bubble" class="speech-bubble hidden"></div>
+                
+                <!-- Contenitore Personaggi dell'Intro -->
+                <div class="intro-characters">
+                    <!-- Marito (inizia rilassato, poi terrorizzato) -->
+                    <div id="intro-husband-container">
+                        <img id="intro-husband" src="intro-1.png" alt="Marito">
+                        <!-- Gocce di sudore animate in CSS per la fase terrorizzata -->
+                        <div id="sweat-drops" class="hidden">
+                            <span class="drop d1">💧</span>
+                            <span class="drop d2">💧</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Moglie arrabbiata (entra da sinistra) -->
+                    <img id="intro-wife" src="intro-wife.png" alt="Moglie Arrabbiata" class="hidden-wife">
+                </div>
             </div>
-
-            <button id="next-btn" class="btn btn-primary">Avanti</button>
-            <button id="start-btn" class="btn btn-danger hidden">Schiaffeggialo!</button>
         </div>
 
-        <!-- SCHERMATA DI GIOCO -->
-        <div id="play-screen" class="screen">
+        <!-- ================= B) SCREEN MENU ================= -->
+        <div id="screen-menu" class="screen hidden">
+            <h1 class="game-title">🥊 SLAP MARMELLINO SLAP!</h1>
+            <p class="game-subtitle">Il gioco in cui raddrizzi la giornata a suon di sberle!</p>
+            
+            <div class="menu-card">
+                <button id="btn-play" class="btn btn-primary">▶ PLAY</button>
+                <div class="highscore-container">
+                    <span class="highscore-icon">🏆</span>
+                    <span class="highscore-text">Miglior Punteggio: <strong id="val-best-score">0</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= C) SCREEN GAME ================= -->
+        <div id="screen-game" class="screen hidden">
+            <!-- Header con Timer e Info -->
             <div class="game-header">
-                <div class="stat-badge">Livello: <span id="level-display">0</span></div>
-                <div class="stat-badge">Punti: <span id="score-display">0</span></div>
-            </div>
-
-            <!-- Barra del Tempo -->
-            <div class="timer-container">
-                <div id="timer-bar"></div>
-            </div>
-
-            <!-- Personaggio Attivo -->
-            <div class="character-area">
-                <div id="character-wrapper">
-                    <img id="game-face" src="assets/faccia-0.png" alt="Marmellino">
-                    <div id="slap-flash">💥 SLAP!</div>
+                <div class="timer-box">
+                    <span>TEMPO: </span>
+                    <span id="game-timer">10</span>s
                 </div>
             </div>
 
-            <p class="instruction">Clicca o tocca ripetutamente la faccia per riempire la barra!</p>
-
-            <!-- Barra di Progresso Livello -->
-            <div class="progress-container">
-                <div id="progress-bar"></div>
+            <!-- Pannello Statistiche Intermedio -->
+            <div class="stats-panel">
+                <div class="stat-box">
+                    <span class="label">SCHIAFFI</span>
+                    <span id="stat-slaps" class="value">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">LIVELLO</span>
+                    <span id="stat-level" class="value">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">PUNTI AZIONE</span>
+                    <span id="stat-ap" class="value">0</span>
+                </div>
             </div>
-            <div class="progress-label">Riempi per superare il livello!</div>
+
+            <!-- Faccia del Protagonista con area d'impatto dinamica -->
+            <div class="face-stage">
+                <div id="face-wrapper">
+                    <img id="game-face" src="faccia-0.png" alt="Faccia Marmellino">
+                    <!-- Contenitore per gli effetti grafici degli schiaffi (stelle, testi comic) -->
+                    <div id="slap-effects-container"></div>
+                </div>
+            </div>
+
+            <!-- Pulsantone di Schiaffo -->
+            <div class="action-area">
+                <button id="btn-slap" class="btn btn-slap">👋 SLAP!</button>
+            </div>
         </div>
 
-        <!-- SCHERMATA DI FINE GIOCO -->
-        <div id="gameover-screen" class="screen">
-            <h1 class="game-over-title">GIOCO FINITO!</h1>
+        <!-- ================= D) SCREEN FINAL ================= -->
+        <div id="screen-final" class="screen hidden">
+            <h2 class="final-title">GAME OVER!</h2>
             
-            <div class="avatar-container">
-                <img id="end-face" src="assets/faccia-5.jpg" alt="Marmellino">
+            <!-- Faccia finale raggiunta -->
+            <div class="final-face-container">
+                <img id="final-face-img" src="faccia-0.png" alt="Faccia Finale">
             </div>
 
-            <div class="stats-card">
-                <p>Livello Massimo Raggiunto: <strong id="max-level-reached" class="text-yellow">0</strong></p>
-                <p>Punti Totali: <strong id="final-score" class="text-green">0</strong></p>
+            <!-- Tabellone Punteggio Dettagliato -->
+            <div class="score-board">
+                <div class="board-row">
+                    <span>Schiaffi Totali:</span>
+                    <strong id="final-slaps">0</strong>
+                </div>
+                <div class="board-row">
+                    <span>Punti Azione (Schiaffi / 10):</span>
+                    <strong id="final-ap">0</strong>
+                </div>
+                <div class="board-row">
+                    <span>Bonus Livello:</span>
+                    <strong id="final-level-bonus">0</strong>
+                </div>
+                <hr class="board-divider">
+                <div class="board-row total-row">
+                    <span>PUNTEGGIO FINALE:</span>
+                    <strong id="final-total-score">0</strong>
+                </div>
             </div>
 
-            <button id="restart-btn" class="btn btn-primary">Gioca Ancora</button>
+            <!-- Pulsante rigioca -->
+            <button id="btn-replay" class="btn btn-secondary">🔄 GIOCA ANCORA</button>
         </div>
 
     </div>
