@@ -1,193 +1,300 @@
-// Referenze DOM (Schermate)
-const screenIntro = document.getElementById('screen-intro');
-const screenMenu = document.getElementById('screen-menu');
-const screenGame = document.getElementById('screen-game');
-const screenEnd = document.getElementById('screen-end');
+/* ============================================================
+   SLap Marmellino Slap - Logica di Gioco JavaScript
+   ============================================================ */
 
-// Referenze DOM (Elementi UI)
-const btnStart = document.getElementById('btn-start');
-const btnSlap = document.getElementById('btn-slap');
-const btnRestart = document.getElementById('btn-restart');
-const faceSprite = document.getElementById('face-sprite');
-const finalFaceSprite = document.getElementById('final-face-sprite');
+// ------------------------------------------------------------
+// STATO GLOBALE DEL GIOCO
+// ------------------------------------------------------------
+const gameState = {
+  screen: 'intro',        // Schermata attiva: intro, menu, game, gameover
+  slaps: 0,               // Conteggio totale schiaffi
+  timeLeft: 30,           // Secondi rimanenti
+  timerInterval: null,    // Riferimento al setInterval del timer
+  level: 0,               // Livello attuale di danno (0-5)
+  maxLevelReached: 0,     // Livello massimo raggiunto nella partita
+  bestScore: 0,           // Miglior punteggio storico
+  isPlaying: false,       // Partita in corso?
+  introStartTime: null    // Timestamp inizio intro
+};
 
-// Testi HUD
-const uiTimer = document.getElementById('timer');
-const uiSlaps = document.getElementById('game-slaps');
-const uiAp = document.getElementById('game-ap');
-const uiLevel = document.getElementById('game-level');
-const uiHighScore = document.getElementById('high-score-display');
-
-// Costanti di Gioco
-const GAME_DURATION = 30; // secondi
-const SLAPS_PER_LEVEL = 10;
-const MAX_LEVEL = 5;
-
-// Array delle immagini per gestire PNG e JPG misti
-const faceFiles = [
-  'faccia-0.png',
-  'faccia-1.png',
-  'faccia-2.png',
-  'faccia-3.jpg',
-  'faccia-4.jpg',
-  'faccia-5.jpg'
+// Frasi censurate per il fumetto dell'intro (esattamente come richiesto)
+const INSULTS = [
+  "@#! cane", "@#! lupo", "@#! ufo", "@#! impestata",
+  "@#! balorda", "porco @#!", "@#! maiale"
 ];
 
-// Variabili di Stato
-let slaps = 0;
-let level = 0;
-let actionPoints = 0;
-let timeLeft = GAME_DURATION;
-let gameInterval;
-let isPlaying = false;
-let highScore = localStorage.getItem('slavatone_highscore') || 0;
+// Mappatura livello -> immagine volto
+const FACE_IMAGES = {
+  0: 'assets/faccia-0.png',
+  1: 'assets/faccia-1.png',
+  2: 'assets/faccia-2.png',
+  3: 'assets/faccia-3.jpg',
+  4: 'assets/faccia-4.jpg',
+  5: 'assets/faccia-5.jpg'
+};
 
-uiHighScore.innerText = highScore;
+// ------------------------------------------------------------
+// RIFERIMENTI DOM
+// ------------------------------------------------------------
+const screens = {
+  intro: document.getElementById('screen-intro'),
+  menu: document.getElementById('screen-menu'),
+  game: document.getElementById('screen-game'),
+  gameover: document.getElementById('screen-gameover')
+};
 
-// --- FUNZIONI DI NAVIGAZIONE SCHERMATE ---
-function showScreen(screenElement) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  screenElement.classList.add('active');
+const els = {
+  speechBubble: document.getElementById('speech-bubble'),
+  timer: document.getElementById('timer'),
+  faceImg: document.getElementById('face-img'),
+  faceContainer: document.getElementById('face-container'),
+  slapCount: document.getElementById('slap-count'),
+  actionPoints: document.getElementById('action-points'),
+  level: document.getElementById('level'),
+  bestScoreValue: document.getElementById('best-score-value'),
+  gameoverFace: document.getElementById('gameover-face'),
+  finalSlaps: document.getElementById('final-slaps'),
+  finalAction: document.getElementById('final-action'),
+  finalBonus: document.getElementById('final-bonus'),
+  finalTotal: document.getElementById('final-total'),
+  btnPlay: document.getElementById('btn-play'),
+  btnSlap: document.getElementById('btn-slap'),
+  btnReplay: document.getElementById('btn-replay')
+};
+
+// ------------------------------------------------------------
+// GESTIONE SCHERMATE
+// ------------------------------------------------------------
+function showScreen(name) {
+  // Nasconde tutte le schermate
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  // Mostra quella richiesta
+  screens[name].classList.add('active');
+  gameState.screen = name;
 }
 
-// --- LOGICA INTRODUZIONE ---
-const swearWords = ["@#! cane", "@#! lupo", "@#! ufo", "@#! impestata", "@#! balorda", "porco @#!", "@#! maiale"];
-
-function runIntroSequence() {
-  setTimeout(() => {
-    document.getElementById('scene-1').classList.remove('show');
-    document.getElementById('scene-2').classList.add('show');
-    
-    let wordIndex = 0;
-    const bubble = document.getElementById('swear-bubble');
-    const swearInterval = setInterval(() => {
-      wordIndex++;
-      if(wordIndex < swearWords.length) {
-        bubble.innerText = swearWords[wordIndex];
-      } else {
-        clearInterval(swearInterval);
-      }
-    }, 300);
-  }, 1000);
-
-  setTimeout(() => {
-    document.getElementById('scene-2').classList.remove('show');
-    document.getElementById('scene-3').classList.add('show');
-  }, 3000);
-
-  setTimeout(() => {
-    document.getElementById('scene-3').classList.remove('show');
-    document.getElementById('scene-4').classList.add('show');
-  }, 4000);
-
-  setTimeout(() => {
-    showScreen(screenMenu);
-  }, 5500); 
+// ------------------------------------------------------------
+// LOCALSTORAGE - Caricamento miglior punteggio
+// ------------------------------------------------------------
+function loadBestScore() {
+  try {
+    const saved = localStorage.getItem('marmellino_best');
+    gameState.bestScore = saved ? parseInt(saved, 10) : 0;
+  } catch (e) {
+    gameState.bestScore = 0; // Fallback se localStorage non disponibile
+  }
+  els.bestScoreValue.textContent = gameState.bestScore;
 }
 
-// --- LOGICA DI GIOCO ---
+function saveBestScore(score) {
+  try {
+    if (score > gameState.bestScore) {
+      gameState.bestScore = score;
+      localStorage.setItem('marmellino_best', score);
+      els.bestScoreValue.textContent = score;
+    }
+  } catch (e) {
+    // Ignora errori localStorage
+  }
+}
+
+// ------------------------------------------------------------
+// INTRO – Animazione fumetto con insulti che scorrono
+// ------------------------------------------------------------
+function startIntro() {
+  // Scena 2: cambia il testo del fumetto ogni 300ms
+  let insultIndex = 0;
+  const bubbleInterval = setInterval(() => {
+    insultIndex++;
+    if (insultIndex < INSULTS.length) {
+      els.speechBubble.textContent = INSULTS[insultIndex];
+      // Forza reflow per riavviare animazione bubblePop
+      els.speechBubble.style.animation = 'none';
+      void els.speechBubble.offsetWidth;
+      els.speechBubble.style.animation = 'bubblePop 0.3s ease-out';
+    }
+  }, 300);
+
+  // Ferma il cambio testo dopo 2 secondi (da 1s a 3s)
+  setTimeout(() => {
+    clearInterval(bubbleInterval);
+  }, 2100);
+
+  // Passa al menu dopo 6 secondi totali
+  setTimeout(() => {
+    showScreen('menu');
+  }, 6000);
+}
+
+// ------------------------------------------------------------
+// AGGIORNA IMMAGINE VOLTO in base al livello
+// ------------------------------------------------------------
+function updateFace(level) {
+  const clampedLevel = Math.min(5, Math.max(0, level));
+  els.faceImg.src = FACE_IMAGES[clampedLevel];
+}
+
+// ------------------------------------------------------------
+// AGGIORNA STATISTICHE sullo schermo
+// ------------------------------------------------------------
+function updateGameStats() {
+  els.slapCount.textContent = gameState.slaps;
+  els.actionPoints.textContent = Math.floor(gameState.slaps / 10);
+  els.level.textContent = gameState.level;
+}
+
+// ------------------------------------------------------------
+// AGGIORNA TIMER visivo
+// ------------------------------------------------------------
+function updateTimerDisplay() {
+  els.timer.textContent = gameState.timeLeft;
+  if (gameState.timeLeft <= 5) {
+    els.timer.classList.add('blink-red');
+  } else {
+    els.timer.classList.remove('blink-red');
+  }
+}
+
+// ------------------------------------------------------------
+// AZIONE SCHIAFFO!
+// ------------------------------------------------------------
+function doSlap() {
+  if (!gameState.isPlaying) return;
+
+  gameState.slaps++;
+
+  // Calcola nuovo livello (ogni 10 schiaffi, max 5)
+  const newLevel = Math.min(5, Math.floor(gameState.slaps / 10));
+  if (newLevel !== gameState.level) {
+    gameState.level = newLevel;
+    if (newLevel > gameState.maxLevelReached) {
+      gameState.maxLevelReached = newLevel;
+    }
+    // Aggiorna immagine volto
+    updateFace(gameState.level);
+  }
+
+  updateGameStats();
+
+  // --- FEEDBACK VISIVO ---
+  // 1. Shake sul volto (cerchio)
+  const container = els.faceContainer;
+  container.classList.remove('shake');
+  void container.offsetWidth; // Forza reflow per riavviare animazione
+  container.classList.add('shake');
+
+  // 2. Zoom/rinculo sul pulsante
+  const btn = els.btnSlap;
+  btn.classList.remove('btn-zoom');
+  void btn.offsetWidth;
+  btn.classList.add('btn-zoom');
+}
+
+// ------------------------------------------------------------
+// AVVIA NUOVA PARTITA
+// ------------------------------------------------------------
 function startGame() {
-  slaps = 0;
-  level = 0;
-  actionPoints = 0;
-  timeLeft = GAME_DURATION;
-  isPlaying = true;
+  // Reset stato
+  gameState.slaps = 0;
+  gameState.timeLeft = 30;
+  gameState.level = 0;
+  gameState.maxLevelReached = 0;
+  gameState.isPlaying = true;
 
-  updateUI();
-  uiTimer.classList.remove('danger');
-  
-  // Imposta la faccia iniziale dall'array
-  faceSprite.src = "assets/" + faceFiles[0];
+  // Mostra schermata gioco
+  showScreen('game');
+  updateFace(0);
+  updateGameStats();
+  updateTimerDisplay();
 
-  showScreen(screenGame);
+  // Avvia il timer (setInterval come richiesto)
+  gameState.timerInterval = setInterval(() => {
+    gameState.timeLeft--;
+    updateTimerDisplay();
 
-  gameInterval = setInterval(() => {
-    timeLeft -= 0.1; 
-    
-    if (timeLeft <= 5) uiTimer.classList.add('danger');
-    
-    if (timeLeft <= 0) {
-      timeLeft = 0;
+    if (gameState.timeLeft <= 0) {
       endGame();
     }
-    uiTimer.innerText = timeLeft.toFixed(1);
-  }, 100);
+  }, 1000);
 }
 
-function handleSlap(e) {
-  if(e) e.preventDefault(); 
-  if(!isPlaying) return;
-
-  slaps++;
-  
-  // Calcolo Punti e Livello
-  actionPoints = Math.floor(slaps / SLAPS_PER_LEVEL);
-  let newLevel = Math.min(actionPoints, MAX_LEVEL);
-
-  // Cambia immagine solo se il livello è scattato pescandola dall'array corretto
-  if (newLevel !== level) {
-    level = newLevel;
-    faceSprite.src = "assets/" + faceFiles[level];
-  }
-
-  updateUI();
-  triggerVisualFeedback();
-}
-
-function updateUI() {
-  uiSlaps.innerText = slaps;
-  uiAp.innerText = actionPoints;
-  uiLevel.innerText = level;
-}
-
-function triggerVisualFeedback() {
-  // Rinculo bottone
-  btnSlap.classList.add('punch-effect');
-  setTimeout(() => btnSlap.classList.remove('punch-effect'), 100);
-
-  // Shake della faccia
-  faceSprite.classList.remove('shake');
-  void faceSprite.offsetWidth; 
-  faceSprite.classList.add('shake');
-}
-
+// ------------------------------------------------------------
+// TERMINA PARTITA – Game Over
+// ------------------------------------------------------------
 function endGame() {
-  isPlaying = false;
-  clearInterval(gameInterval);
+  gameState.isPlaying = false;
+  clearInterval(gameState.timerInterval);
+  gameState.timerInterval = null;
 
-  // Calcolo Punteggio Finale
-  const bonusLevel = level;
-  const totalScore = actionPoints + bonusLevel;
+  // Calcolo punteggio finale
+  const actionPoints = Math.floor(gameState.slaps / 10);
+  const totalScore = actionPoints + gameState.maxLevelReached;
 
-  // Salva Highscore
-  if(totalScore > highScore) {
-    highScore = totalScore;
-    localStorage.setItem('slavatone_highscore', highScore);
-    uiHighScore.innerText = highScore;
-  }
+  // Salva best score
+  saveBestScore(totalScore);
 
-  // Popola schermata finale
-  document.getElementById('end-slaps').innerText = slaps;
-  document.getElementById('end-ap').innerText = actionPoints;
-  document.getElementById('end-bonus').innerText = `+${bonusLevel}`;
-  document.getElementById('end-total').innerText = totalScore;
-  
-  // Aggiorna faccia finale
-  finalFaceSprite.src = "assets/" + faceFiles[level];
+  // Mostra schermata Game Over
+  showScreen('gameover');
 
-  showScreen(screenEnd);
+  // Mostra il volto al massimo livello raggiunto
+  els.gameoverFace.src = FACE_IMAGES[gameState.maxLevelReached];
+
+  // Popola le statistiche finali
+  els.finalSlaps.textContent = gameState.slaps;
+  els.finalAction.textContent = actionPoints;
+  els.finalBonus.textContent = '+' + gameState.maxLevelReached;
+  els.finalTotal.textContent = totalScore;
 }
 
-// --- EVENT LISTENERS ---
-btnStart.addEventListener('click', startGame);
-btnRestart.addEventListener('click', () => showScreen(screenMenu));
+// ------------------------------------------------------------
+// EVENT LISTENERS (Touch e Click con preventDefault)
+// ------------------------------------------------------------
 
-// Gestione unificata per desktop/mobile
-btnSlap.addEventListener('touchstart', handleSlap, { passive: false });
-btnSlap.addEventListener('mousedown', (e) => {
-  if(e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return; 
-  handleSlap(e);
+// Pulsante Gioca dal Menu
+function handlePlay(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  startGame();
+}
+els.btnPlay.addEventListener('click', handlePlay);
+els.btnPlay.addEventListener('touchstart', handlePlay, { passive: false });
+
+// Pulsante Schiaffo!
+function handleSlap(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  doSlap();
+}
+els.btnSlap.addEventListener('click', handleSlap);
+els.btnSlap.addEventListener('touchstart', handleSlap, { passive: false });
+
+// Pulsante Rigio
+function handleReplay(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  showScreen('menu');
+}
+els.btnReplay.addEventListener('click', handleReplay);
+els.btnReplay.addEventListener('touchstart', handleReplay, { passive: false });
+
+// Previeni scroll e zoom sulla pagina (mobile)
+document.addEventListener('touchmove', function(e) {
+  if (e.target === els.btnSlap || e.target === els.btnPlay || e.target === els.btnReplay) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+// Doppio tap zoom prevention
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function(e) {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 300) {
+    e.preventDefault();
+  }
+  lastTouchEnd = now;
+}, false);
+
+// ------------------------------------------------------------
+// INIZIALIZZAZIONE
+// ------------------------------------------------------------
+window.addEventListener('DOMContentLoaded', () => {
+  loadBestScore();
+  startIntro();
 });
-
-// Avvia intro al caricamento
-window.onload = runIntroSequence;
