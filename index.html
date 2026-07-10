@@ -1,109 +1,79 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>👋 SLap Marmellino Slap</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marmellino Slap Game</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="game-container">
+        
+        <!-- SCHERMATA DI INTRO / STORIA -->
+        <div id="intro-screen" class="screen active">
+            <h1 class="game-title">MARMELLINO</h1>
+            <p class="subtitle">Il fischietto molesto</p>
+            
+            <div class="avatar-container animate-float">
+                <img id="intro-img" src="assets/intro-1.png" alt="Marmellino">
+                <div id="speech-bubble" class="speech-bubble hidden">Fiuuu~ 😙♪</div>
+            </div>
 
-  <!-- ============================================================
-       SCHERMATA A) INTRO – 5 scene animate
-       ============================================================ -->
-  <div id="screen-intro" class="screen active">
+            <div id="intro-story-text" class="story-text">
+                Marmellino adora fischiettare allegro in salotto...
+            </div>
 
-    <!-- Scena 1 (0-1s): Protagonista fischietta beatamente -->
-    <div class="intro-scene" id="intro-scene-1">
-      <img src="assets/intro-1.png.png" class="intro-char" alt="Protagonista">
-      <div class="music-notes">
-        <span>♪</span><span>♫</span><span>♬</span>
-      </div>
+            <button id="next-btn" class="btn btn-primary">Avanti</button>
+            <button id="start-btn" class="btn btn-danger hidden">Schiaffeggialo!</button>
+        </div>
+
+        <!-- SCHERMATA DI GIOCO -->
+        <div id="play-screen" class="screen">
+            <div class="game-header">
+                <div class="stat-badge">Livello: <span id="level-display">0</span></div>
+                <div class="stat-badge">Punti: <span id="score-display">0</span></div>
+            </div>
+
+            <!-- Barra del Tempo -->
+            <div class="timer-container">
+                <div id="timer-bar"></div>
+            </div>
+
+            <!-- Personaggio Attivo -->
+            <div class="character-area">
+                <div id="character-wrapper">
+                    <img id="game-face" src="assets/faccia-0.png" alt="Marmellino">
+                    <div id="slap-flash">💥 SLAP!</div>
+                </div>
+            </div>
+
+            <p class="instruction">Clicca o tocca ripetutamente la faccia per riempire la barra!</p>
+
+            <!-- Barra di Progresso Livello -->
+            <div class="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+            <div class="progress-label">Riempi per superare il livello!</div>
+        </div>
+
+        <!-- SCHERMATA DI FINE GIOCO -->
+        <div id="gameover-screen" class="screen">
+            <h1 class="game-over-title">GIOCO FINITO!</h1>
+            
+            <div class="avatar-container">
+                <img id="end-face" src="assets/faccia-5.jpg" alt="Marmellino">
+            </div>
+
+            <div class="stats-card">
+                <p>Livello Massimo Raggiunto: <strong id="max-level-reached" class="text-yellow">0</strong></p>
+                <p>Punti Totali: <strong id="final-score" class="text-green">0</strong></p>
+            </div>
+
+            <button id="restart-btn" class="btn btn-primary">Gioca Ancora</button>
+        </div>
+
     </div>
 
-    <!-- Scena 2 (1-3s): Fumetto con insulti che scorrono -->
-    <div class="intro-scene" id="intro-scene-2">
-      <img src="assets/intro-1.png.png" class="intro-char" alt="Protagonista">
-      <div class="speech-bubble" id="speech-bubble">@#! cane</div>
-    </div>
-
-    <!-- Scena 3 (3-4s): Moglie irrompe da sinistra -->
-    <div class="intro-scene" id="intro-scene-3">
-      <img src="assets/intro-wife.png.png" class="intro-wife" alt="Moglie">
-    </div>
-
-    <!-- Scena 4 (4-5s): Protagonista terrorizzato, goccia di sudore -->
-    <div class="intro-scene" id="intro-scene-4">
-      <div class="terrified-bg" id="terrified-bg"></div>
-      <div class="sweat-drop"></div>
-    </div>
-
-    <!-- Scena 5 (5-6s): Dissolvenza incrociata verso il Menu -->
-    <div class="intro-scene" id="intro-scene-5">
-      <div class="fade-overlay"></div>
-    </div>
-  </div>
-
-  <!-- ============================================================
-       SCHERMATA B) MENU
-       ============================================================ -->
-  <div id="screen-menu" class="screen">
-    <h1>👋 SLap Marmellino Slap</h1>
-    <button id="btn-play">▶ GIOCA</button>
-    <div id="best-score-display">🏆 Miglior Punteggio: <span id="best-score-value">0</span></div>
-  </div>
-
-  <!-- ============================================================
-       SCHERMATA C) GIOCO
-       ============================================================ -->
-  <div id="screen-game" class="screen">
-    <div id="timer">30</div>
-
-    <!-- Contenitore volto con cerchio bianco -->
-    <div class="face-container" id="face-container">
-      <img id="face-img" src="assets/faccia-0.png.png" alt="Volto">
-    </div>
-
-    <div id="stats">
-      <span>👋 Schiaffi: <span id="slap-count">0</span></span>
-      <span>⭐ Punti Azione: <span id="action-points">0</span></span>
-      <span>💥 Livello: <span id="level">0</span></span>
-    </div>
-
-    <button id="btn-slap">👋 SCHIAFFO!</button>
-  </div>
-
-  <!-- ============================================================
-       SCHERMATA D) GAME OVER
-       ============================================================ -->
-  <div id="screen-gameover" class="screen">
-    <div class="face-container gameover" id="gameover-face-container">
-      <img id="gameover-face" src="assets/faccia-0.png.png" alt="Volto">
-    </div>
-
-    <div id="final-stats">
-      <h2>💀 RISULTATO FINALE</h2>
-      <div class="stat-row">
-        <span>👋 Schiaffi totali:</span>
-        <span id="final-slaps">0</span>
-      </div>
-      <div class="stat-row">
-        <span>⭐ Punti Azione:</span>
-        <span id="final-action">0</span>
-      </div>
-      <div class="stat-row">
-        <span>💥 Bonus Livello:</span>
-        <span id="final-bonus">0</span>
-      </div>
-      <div class="stat-row total">
-        <span>🏆 PUNTEGGIO TOTALE:</span>
-        <span id="final-total">0</span>
-      </div>
-    </div>
-
-    <button id="btn-replay">🔄 RIGIOCA</button>
-  </div>
-
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
