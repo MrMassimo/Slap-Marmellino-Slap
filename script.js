@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ========================================================
     function playIntroSequence() {
         switchScreen(scrIntro);
-        introHusband.src = "intro-1.png";
+        introHusband.src = "intro-1.png.png";
         introHusband.classList.remove("scared-animation");
         introWife.classList.add("hidden-wife");
         introBubble.classList.add("hidden");
@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3500);
 
         setTimeout(() => {
-            introHusband.src = "intro-terrified.png";
+            introHusband.src = "intro-terrified.png.png";
             introHusband.classList.add("scared-animation");
             sweatDrops.classList.remove("hidden");
         }, 4500);
@@ -172,7 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
         statAp.textContent = actionPoints;
         gameTimer.textContent = timeLeft;
         gameTimer.parentElement.classList.remove("timer-pulse");
-        gameFace.src = "faccia-0.png";
+        gameFace.src = "faccia-0.png.png";
         btnSlap.disabled = false;
 
         switchScreen(scrGame);
@@ -217,9 +217,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function updateFaceImage(currentLevel) {
         if (currentLevel >= 3) {
-            gameFace.src = `faccia-${currentLevel}.jpg`;
+            gameFace.src = `faccia-${currentLevel}.jpg.png`;
         } else {
-            gameFace.src = `faccia-${currentLevel}.png`;
+            gameFace.src = `faccia-${currentLevel}.png.png`;
         }
     }
 
@@ -270,9 +270,9 @@ document.addEventListener("DOMContentLoaded", () => {
         finalTotalScore.textContent = finalScore;
 
         if (level >= 3) {
-            finalFaceImg.src = `faccia-${level}.jpg`;
+            finalFaceImg.src = `faccia-${level}.jpg.png`;
         } else {
-            finalFaceImg.src = `faccia-${level}.png`;
+            finalFaceImg.src = `faccia-${level}.png.png`;
         }
 
         setTimeout(() => {
