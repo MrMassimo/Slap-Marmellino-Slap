@@ -14,7 +14,6 @@ const gameState = {
   maxLevelReached: 0,     // Livello massimo raggiunto nella partita
   bestScore: 0,           // Miglior punteggio storico
   isPlaying: false,       // Partita in corso?
-  introStartTime: null    // Timestamp inizio intro
 };
 
 // Frasi censurate per il fumetto dell'intro (esattamente come richiesto)
@@ -23,14 +22,14 @@ const INSULTS = [
   "@#! balorda", "porco @#!", "@#! maiale"
 ];
 
-// Mappatura livello -> immagine volto
+// Mappatura livello -> immagine volto (nomi con doppia estensione)
 const FACE_IMAGES = {
-  0: 'assets/faccia-0.png',
-  1: 'assets/faccia-1.png',
-  2: 'assets/faccia-2.png',
-  3: 'assets/faccia-3.jpg',
-  4: 'assets/faccia-4.jpg',
-  5: 'assets/faccia-5.jpg'
+  0: 'assets/faccia-0.png.png',
+  1: 'assets/faccia-1.png.png',
+  2: 'assets/faccia-2.png.png',
+  3: 'assets/faccia-3.jpg.png',
+  4: 'assets/faccia-4.jpg.png',
+  5: 'assets/faccia-5.jpg.png'
 };
 
 // ------------------------------------------------------------
@@ -81,7 +80,7 @@ function loadBestScore() {
     const saved = localStorage.getItem('marmellino_best');
     gameState.bestScore = saved ? parseInt(saved, 10) : 0;
   } catch (e) {
-    gameState.bestScore = 0; // Fallback se localStorage non disponibile
+    gameState.bestScore = 0;
   }
   els.bestScoreValue.textContent = gameState.bestScore;
 }
@@ -115,7 +114,7 @@ function startIntro() {
     }
   }, 300);
 
-  // Ferma il cambio testo dopo 2 secondi (da 1s a 3s)
+  // Ferma il cambio testo dopo 2.1 secondi (7 frasi x 300ms)
   setTimeout(() => {
     clearInterval(bubbleInterval);
   }, 2100);
